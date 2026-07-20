@@ -1,4 +1,4 @@
-import { MdArrowOutward, MdCopyright } from "react-icons/md";
+import { MdArrowOutward } from "react-icons/md";
 import "./styles/Contact.css";
 
 const Contact = () => {
@@ -10,8 +10,8 @@ const Contact = () => {
           <div className="contact-box">
             <h4>Email</h4>
             <p>
-              <a href="mailto:example@mail.com" data-cursor="disable">
-                example@mail.com
+              <a href="mailto:faisaaal.he@gmail.commail.com" data-cursor="disable">
+                faisaaal.he@gmail.commail.com
               </a>
             </p>
             <h4>Phone</h4>
@@ -56,14 +56,7 @@ const Contact = () => {
               Instagram <MdArrowOutward />
             </a>
           </div>
-          <div className="contact-box">
-            <h2>
-              Designed and Developed <br /> by <span>Moncy Yohannan</span>
-            </h2>
-            <h5>
-              <MdCopyright /> 2024
-            </h5>
-          </div>
+
         </div>
       </div>
     </div>

@@ -12,15 +12,16 @@ import {
 } from "@react-three/rapier";
 
 const textureLoader = new THREE.TextureLoader();
+// Video editor toolkit — each sphere represents a core tool
 const imageUrls = [
-  "/images/react2.webp",
-  "/images/next2.webp",
-  "/images/node2.webp",
-  "/images/express.webp",
-  "/images/mongo.webp",
-  "/images/mysql.webp",
-  "/images/typescript.webp",
-  "/images/javascript.webp",
+  "/images/premiere.webp",    // Adobe Premiere Pro
+  "/images/aftereffects.webp",// After Effects
+  "/images/capcut-image.jpg",      // CapCut
+  "/images/davinci.webp",     // DaVinci Resolve
+  "/images/photoshop.webp",   // Photoshop
+  "/images/audition.webp",    // Audition
+  "/images/premiere.webp",    // Final Cut Pro (reusing Premiere)
+  "/images/aftereffects.webp",// Illustrator (reusing AE)
 ];
 const textures = imageUrls.map((url) => textureLoader.load(url));
 
@@ -168,7 +169,7 @@ const TechStack = () => {
 
   return (
     <div className="techstack">
-      <h2> My Techstack</h2>
+      <h2>My Toolkit</h2>
 
       <Canvas
         shadows

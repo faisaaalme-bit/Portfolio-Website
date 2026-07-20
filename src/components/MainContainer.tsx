@@ -1,16 +1,18 @@
-import { lazy, PropsWithChildren, Suspense, useEffect, useState } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import About from "./About";
 import Career from "./Career";
-import Contact from "./Contact";
+// import Contact from "./Contact";
 import Cursor from "./Cursor";
 import Landing from "./Landing";
 import Navbar from "./Navbar";
 import SocialIcons from "./SocialIcons";
 import WhatIDo from "./WhatIDo";
 import Work from "./Work";
+import Services from "./Services";
 import setSplitText from "./utils/splitText";
 
-const TechStack = lazy(() => import("./TechStack"));
+// const TechStack = lazy(() => import("./TechStack"));
 
 const MainContainer = ({ children }: PropsWithChildren) => {
   const [isDesktopView, setIsDesktopView] = useState<boolean>(
@@ -29,6 +31,13 @@ const MainContainer = ({ children }: PropsWithChildren) => {
     };
   }, [isDesktopView]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="container-main">
       <Cursor />
@@ -41,14 +50,15 @@ const MainContainer = ({ children }: PropsWithChildren) => {
             <Landing>{!isDesktopView && children}</Landing>
             <About />
             <WhatIDo />
+            <Services />
             <Career />
             <Work />
-            {isDesktopView && (
+            {/* {isDesktopView && (
               <Suspense fallback={<div>Loading....</div>}>
                 <TechStack />
               </Suspense>
-            )}
-            <Contact />
+            )} */}
+            {/* <Contact /> */}
           </div>
         </div>
       </div>
