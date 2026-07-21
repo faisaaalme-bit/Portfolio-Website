@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import "./styles/Work.css";
 
-// Configuration for slides data - edit paths, video links, text here dynamically
+// Configuration for slides data
+// aspectRatio: "9/16" for portrait (Reels/TikTok), "16/9" for landscape (YouTube)
 const workSlides = [
   {
     id: "01",
@@ -13,7 +14,8 @@ const workSlides = [
     tools: "Premiere Pro • Capcut",
     media: {
       type: "video",
-      src: "/video/v1.MP4"
+      src: "/video/v1.MP4",
+      aspectRatio: "9/16"
     }
   },
   {
@@ -28,7 +30,8 @@ const workSlides = [
       type: "carousel",
       images: [
         "/images/v2.jpeg",
-      ]
+      ],
+      aspectRatio: "9/16"
       // src: "/video/v2.MP4"
     }
   },
@@ -42,7 +45,8 @@ const workSlides = [
     focus: "Strong hook • Fast pacing • Product emphasis",
     media: {
       type: "video",
-      src: "/video/v3.MP4"
+      src: "/video/v3.MP4",
+      aspectRatio: "9/16"
     }
   },
   {
@@ -53,11 +57,13 @@ const workSlides = [
     description: "A comparison of the original footage and the final edit, showcasing how motion graphics, typography, pacing, and visual enhancements transformed the content into a polished, engaging reel.",
     beforeMedia: {
       type: "video",
-      src: "/video/v4_before.mp4"
+      src: "/video/v4_before.mp4",
+      aspectRatio: "9/16"
     },
     afterMedia: {
       type: "video",
-      src: "/video/IMG_4812.MP4"
+      src: "/video/IMG_4812.MP4",
+      aspectRatio: "9/16"
     }
   },
   {
@@ -71,20 +77,12 @@ const workSlides = [
       { label: "Viral Reel", value: "4.49M", change: "Views reached" }
     ],
     media: {
-      type: "carousel",
+      type: "compare",
       images: [
-        "/images/i1.jpg",
-        "/images/i2.jpg",
-        "/images/i3.jpg",
-        "/images/i4.jpg",
-        "/images/i5.jpg",
-        "/images/i6.jpg",
-        "/images/i7.jpg",
-        "/images/i8.jpg",
-        "/images/i9.jpg",
-        "/images/i10.jpg",
-
-      ]
+        "/images/v4_before.png",
+        "/images/v2.jpeg"
+      ],
+      aspectRatio: "9/16"
     }
   },
   {
@@ -106,13 +104,15 @@ const workSlides = [
         "/images/i8.jpg",
         "/images/i9.jpg",
         "/images/i10.jpg",
-
-      ]
+      ],
+      aspectRatio: "9/16"
     }
   }
 ];
 
-// Inner looping image carousel with smooth fading effect
+// ─────────────────────────────────────────────────────────────
+// Inner looping image carousel with smooth cross-fade
+// ─────────────────────────────────────────────────────────────
 const InnerImageCarousel = ({ images }: { images: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -143,6 +143,128 @@ const InnerImageCarousel = ({ images }: { images: string[] }) => {
           }}
         />
       ))}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// AdaptiveMedia — auto-adapts container to 9:16 or 16:9
+// Portrait (9/16): fixed height=260px, width derived from ratio
+// Landscape (16/9): fixed width=100%, height derived from ratio
+//
+// IMPORTANT: the ratio-driven height/width block is spread AFTER
+// `...style`, so it always wins. This guarantees every slide that
+// declares the same aspectRatio renders at the exact same box size
+// (e.g. every "9/16" media = 146px × 260px), regardless of what a
+// caller passes in `style`. Callers should only use `style` for
+// safe cosmetic overrides (margin, flexShrink, etc.) — never width
+// or height, since those get overridden on purpose here.
+// ─────────────────────────────────────────────────────────────
+interface MediaDef {
+  type: string;
+  src?: string;
+  images?: string[];
+  aspectRatio?: string;
+}
+
+const AdaptiveMedia = ({
+  media,
+  alt = "",
+  style = {},
+  size = 260,
+}: {
+  media: MediaDef;
+  alt?: string;
+  style?: React.CSSProperties;
+  size?: number; // portrait height in px (landscape ignores this, uses maxHeight 220)
+}) => {
+  const ratio = media.aspectRatio ?? "9/16";
+  const isPortrait = ratio === "9/16";
+
+  const containerStyle: React.CSSProperties = {
+    position: "relative",
+    aspectRatio: ratio,
+    borderRadius: "8px",
+    overflow: "hidden",
+    border: "1px solid #363636",
+    background: "#000",
+    flexShrink: 0,
+    margin: "0 auto",
+    ...style, // cosmetic overrides only (margin, flexShrink, etc. — never width/height)
+    ...(isPortrait
+      ? { height: `${size}px`, width: "auto" } // always wins — forces true 9:16 at the requested size
+      : { width: "100%", height: "auto", maxHeight: "220px" }), // always wins — forces true 16:9
+  };
+
+  const fillStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  };
+
+  return (
+    <div style={containerStyle}>
+      {media.type === "video" && media.src && (
+        <video
+          src={media.src}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={fillStyle}
+          ref={(el) => { if (el) el.muted = true; }}
+        />
+      )}
+      {media.type === "image" && media.src && (
+        <img src={media.src} alt={alt} style={fillStyle} />
+      )}
+      {media.type === "carousel" && media.images && (
+        <InnerImageCarousel images={media.images} />
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// CompareArrow — "before" thumbnail → arrow → "after" thumbnail
+// Reuses AdaptiveMedia (same 9:16/16:9 lock) at a smaller `size`
+// so the pair fits next to other content (e.g. stats/description).
+// ─────────────────────────────────────────────────────────────
+const CompareArrow = ({
+  images,
+  aspectRatio = "9/16",
+  size = 140,
+}: {
+  images: string[];
+  aspectRatio?: string;
+  size?: number;
+}) => {
+  if (images.length < 2) return null;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+      <AdaptiveMedia
+        media={{ type: "image", src: images[0], aspectRatio }}
+        size={size}
+        style={{ margin: 0 }}
+      />
+      <span
+        style={{
+          fontSize: "22px",
+          color: "var(--accentColor)",
+          lineHeight: 1,
+          flexShrink: 0,
+        }}
+        aria-hidden="true"
+      >
+        →
+      </span>
+      <AdaptiveMedia
+        media={{ type: "image", src: images[1], aspectRatio }}
+        size={size}
+        style={{ margin: 0 }}
+      />
     </div>
   );
 };
@@ -195,20 +317,7 @@ const Work = () => {
                     </div>
                     {slide.media && (
                       <div className="work-image">
-                        <div className="work-video-portrait">
-                          {slide.media.type === "video" ? (
-                            <video
-                              src={slide.media.src}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              ref={(el) => { if (el) el.muted = true; }}
-                            />
-                          ) : (
-                            <img src={slide.media.src} alt={slide.title} />
-                          )}
-                        </div>
+                        <AdaptiveMedia media={slide.media as MediaDef} alt={slide.title} />
                       </div>
                     )}
                   </div>
@@ -246,15 +355,13 @@ const Work = () => {
                     </div>
                     {slide.media && (
                       <div className="work-image" style={{ marginTop: "30px" }}>
-                        <div className="work-image-in" style={{ width: "100%", height: "160px", borderRadius: "8px", overflow: "hidden", border: "1px solid #363636" }}>
-                          {slide.media.type === "carousel" && slide.media.images ? (
-                            <InnerImageCarousel images={slide.media.images} />
-                          ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "linear-gradient(135deg, #1e1e1e 0%, #111111 100%)" }}>
-                              <h4 style={{ fontSize: "24px", letterSpacing: "4px", color: "rgba(255,255,255,0.15)", textTransform: "uppercase", fontWeight: 700 }}>{slide.clientName}</h4>
-                            </div>
-                          )}
-                        </div>
+                        {slide.media.type === "carousel" && slide.media.images ? (
+                          <AdaptiveMedia media={slide.media as MediaDef} alt={slide.clientName} />
+                        ) : (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "160px", background: "linear-gradient(135deg, #1e1e1e 0%, #111111 100%)", borderRadius: "8px", border: "1px solid #363636" }}>
+                            <h4 style={{ fontSize: "24px", letterSpacing: "4px", color: "rgba(255,255,255,0.15)", textTransform: "uppercase", fontWeight: 700 }}>{slide.clientName}</h4>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -274,18 +381,9 @@ const Work = () => {
                       </div>
                     </div>
                     <div className="work-split-container">
-                      <div className="work-video-portrait">
-                        {slide.media && (
-                          <video
-                            src={slide.media.src}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            ref={(el) => { if (el) el.muted = true; }}
-                          />
-                        )}
-                      </div>
+                      {slide.media && (
+                        <AdaptiveMedia media={slide.media as MediaDef} />
+                      )}
                       <div className="work-split-right">
                         <div className="breakdown-section">
                           <h4>Client Goal</h4>
@@ -323,33 +421,21 @@ const Work = () => {
                     <div className="before-after-container">
                       <div className="before-after-half">
                         <span className="before-after-label">Raw Footage</span>
-                        <div className="work-video-portrait">
-                          {slide.beforeMedia && (
-                            <video
-                              src={slide.beforeMedia.src}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              ref={(el) => { if (el) el.muted = true; }}
-                            />
-                          )}
-                        </div>
+                        {slide.beforeMedia && (
+                          <AdaptiveMedia
+                            media={slide.beforeMedia as MediaDef}
+                            style={{ margin: 0 }}
+                          />
+                        )}
                       </div>
                       <div className="before-after-half">
                         <span className="before-after-label">Final Edit</span>
-                        <div className="work-video-portrait">
-                          {slide.afterMedia && (
-                            <video
-                              src={slide.afterMedia.src}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              ref={(el) => { if (el) el.muted = true; }}
-                            />
-                          )}
-                        </div>
+                        {slide.afterMedia && (
+                          <AdaptiveMedia
+                            media={slide.afterMedia as MediaDef}
+                            style={{ margin: 0 }}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -360,7 +446,7 @@ const Work = () => {
             if (slide.type === "impact") {
               return (
                 <div className="work-box wide-box" key={slide.id}>
-                  <div className="work-info" style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
+                  <div className="work-info" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
                     <div className="work-title">
                       <h3>{slide.id}</h3>
                       <div>
@@ -368,27 +454,66 @@ const Work = () => {
                         <p>{slide.subtitle}</p>
                       </div>
                     </div>
-                    <div className="stats-grid" style={{ margin: "15px 0" }}>
+
+                    {/* Compact stat cards — sized to content, not stretched to fill the box */}
+                    <div
+                      className="stats-grid"
+                      style={{
+                        display: "flex",
+                        gap: "16px",
+                        margin: "20px 0",
+                        flexWrap: "wrap",
+                      }}
+                    >
                       {slide.stats?.map((stat, sIdx) => (
-                        <div className="stat-card" key={sIdx}>
-                          <span className="stat-label">{stat.label}</span>
-                          <span className="stat-value" style={{ fontSize: "28px" }}>{stat.value}</span>
-                          <span className="stat-change">{stat.change}</span>
+                        <div
+                          className="stat-card"
+                          key={sIdx}
+                          style={{
+                            flex: "0 1 auto",
+                            minHeight: "0",
+                            height: "auto",
+                            padding: "16px 20px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px",
+                          }}
+                        >
+                          <span className="stat-label" style={{ fontSize: "11px" }}>{stat.label}</span>
+                          <span className="stat-value" style={{ fontSize: "26px", lineHeight: 1.1 }}>{stat.value}</span>
+                          <span className="stat-change" style={{ fontSize: "12px" }}>{stat.change}</span>
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: "flex", gap: "30px", alignItems: "flex-start", marginTop: "10px" }}>
-                      <div style={{ flex: 1 }}>
-                        <p className="impact-desc" style={{ fontSize: "13.5px", lineHeight: "1.6", color: "#adacac", fontWeight: "300" }}>
-                          {slide.description}
-                        </p>
-                      </div>
-                      {slide.media && slide.media.type === "carousel" && slide.media.images && (
-                        <div className="work-video-portrait" style={{ flexShrink: 0 }}>
-                          <InnerImageCarousel images={slide.media.images} />
+
+                    {/* Description */}
+                    <p
+                      className="impact-desc"
+                      style={{ fontSize: "13.5px", lineHeight: "1.6", color: "#adacac", fontWeight: "300", margin: "0 0 20px 0" }}
+                    >
+                      {slide.description}
+                    </p>
+
+                    {/* Comparison — given real visual weight, not squeezed into a corner */}
+                    {slide.media && slide.media.type === "compare" && slide.media.images && (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginTop: "auto" }}>
+                        <div style={{ display: "flex", gap: "20px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px", color: "var(--accentColor)" }}>
+                          <span style={{ width: "130px", textAlign: "center" }}>Before</span>
+                          <span style={{ width: "22px" }} />
+                          <span style={{ width: "130px", textAlign: "center" }}>After</span>
                         </div>
-                      )}
-                    </div>
+                        <CompareArrow
+                          images={slide.media.images}
+                          aspectRatio={slide.media.aspectRatio}
+                          size={230}
+                        />
+                      </div>
+                    )}
+                    {slide.media && slide.media.type === "carousel" && slide.media.images && (
+                      <div style={{ marginTop: "auto" }}>
+                        <AdaptiveMedia media={slide.media as MediaDef} style={{ flexShrink: 0 }} />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -410,23 +535,7 @@ const Work = () => {
                     </p>
                     {slide.media && (
                       <div className="work-image" style={{ marginTop: "auto" }}>
-                        <div className="work-video-portrait">
-                          {slide.media.type === "carousel" && slide.media.images ? (
-                            <InnerImageCarousel images={slide.media.images} />
-                          ) : slide.media.type === "video" ? (
-                            <video
-                              src={slide.media.src}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              ref={(el) => { if (el) el.muted = true; }}
-                            />
-                          ) : (
-                            <img src={slide.media.src} alt={slide.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          )}
-                        </div>
+                        <AdaptiveMedia media={slide.media as MediaDef} alt={slide.title} />
                       </div>
                     )}
                   </div>
